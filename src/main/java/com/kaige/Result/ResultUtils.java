@@ -12,6 +12,16 @@ public class ResultUtils {
     }
 
     /**
+     * 成功
+     * @param data 数据
+     * @param message 信息
+     * @return 结果
+     */
+    public static <T> BaseResponse<T> success(T data,String message){
+        return new BaseResponse<>(0,message,data);
+    }
+
+    /**
      * 失败
      * @param errorCode 错误码
      * @return 结果

@@ -2,6 +2,7 @@ package com.kaige.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.util.Date;
 import lombok.Data;
@@ -14,9 +15,9 @@ import lombok.Data;
 @Data
 public class User {
     /**
-     * 
+     * id(主键策略)
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -50,18 +51,19 @@ public class User {
     private String userRole;
 
     /**
-     * 
+     * 创建时间
      */
     private Date createTime;
 
     /**
-     * 创建时间
+     * 更新时间
      */
     private Date updateTime;
 
     /**
-     * 是否删除
+     * 逻辑删除
      */
+    @TableLogic
     private Integer isDelete;
 
     @Override
