@@ -8,6 +8,7 @@ class KPictureApplicationTests {
 
     @Test
     void contextLoads() {
+
     }
 
 }

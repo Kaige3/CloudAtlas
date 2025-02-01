@@ -48,6 +48,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private UserService userService;
 
 
+
     @Override
     public PictureVO uploadPicture(MultipartFile file, PictureUploadDto pictureUploadDto, User loginUser) {
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
@@ -138,7 +139,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
 
         // 排序
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals("ascend"),sortField);
+        String safeSortOrder = (sortOrder == null) ? "ascend" : sortOrder;  // 提供默认排序方式
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), "ascend".equals(safeSortOrder), sortField);
+
+//        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals("ascend"),sortField);
         return queryWrapper;
     }
 
