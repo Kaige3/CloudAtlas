@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kaige.config.CosClientConfig;
 import com.kaige.model.dto.picture.PictureQueryDto;
+import com.kaige.model.dto.picture.PictureReviewDto;
+import com.kaige.model.dto.picture.PictureUploadByBatchDto;
 import com.kaige.model.dto.picture.PictureUploadDto;
 import com.kaige.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -23,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface PictureService extends IService<Picture> {
 
 
-    PictureVO uploadPicture(MultipartFile file, PictureUploadDto pictureUploadDto, User loginUser);
+    PictureVO uploadPicture(Object inputSource, PictureUploadDto pictureUploadDto, User loginUser);
 
     // 将查询请求转换为QueryWrapper对象
     QueryWrapper<Picture> getQueryWrapper(PictureQueryDto pictureQueryDto);
@@ -36,4 +38,15 @@ public interface PictureService extends IService<Picture> {
 
     // 图片数据校验
     void validPicture(Picture picture);
+
+    // 图片审核
+    void doPictureReview(PictureReviewDto pictureReviewDto,User loginUser);
+
+    // 填充审核信息
+    void fillReviewInfo(Picture picture, User loginUser);
+
+    Integer uploadPictureByBatch(PictureUploadByBatchDto pictureUploadByBatchDto
+    ,User loginUser);
+
+    void clearPictureFile(Picture picture);
 }

@@ -20,6 +20,7 @@ public class PictureVO implements Serializable {
 
     private Long id;
     private String url;
+    private String thumbnailUrl;
     private String name;
     private String introduction;
     private List<String> tags;

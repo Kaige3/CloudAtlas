@@ -1,5 +1,6 @@
 package com.kaige.manager.upload;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -10,13 +11,16 @@ import com.kaige.exception.ErrorCode;
 import com.kaige.manager.CosManager;
 import com.kaige.model.dto.file.UploadPictureDto;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
+import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 public abstract class PictureUploadTemplate {
@@ -27,6 +31,12 @@ public abstract class PictureUploadTemplate {
     protected CosClientConfig cosClientConfig;
 
 
+    /**
+     *
+     * @param inputSource 图片来源(文件类型 & URL字符串)
+     * @param uploadPathPrefix 上传路径前缀统一为：public/userId
+     * @return
+     */
     public final UploadPictureDto uploadPicture(Object inputSource,String uploadPathPrefix){
         // 1.校验图片
         validPicture(inputSource);
@@ -46,6 +56,23 @@ public abstract class PictureUploadTemplate {
             // 4.上传图片到对象存储
             PutObjectResult putObjectResult = cosManager.putObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+
+
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if(CollUtil.isNotEmpty(objectList)){
+
+                CIObject compressedCiObject = objectList.get(0);
+                //默认为 压缩图
+                CIObject thumbailCiObject = compressedCiObject;
+                if (objectList.size() > 1){
+                    // 获取缩略图
+                     thumbailCiObject = objectList.get(1);
+                }
+                // 封装压缩图返回结果
+                return buildResult(orinFilename,compressedCiObject,thumbailCiObject);
+
+            }
             // 5.封装返回结果
             return buildResult(orinFilename,file,uploadPath,imageInfo);
         } catch (Exception e) {
@@ -55,6 +82,41 @@ public abstract class PictureUploadTemplate {
             // 6.清理临时文件
            deleteTimeFile(file);
         }
+    }
+
+    private UploadPictureDto buildResult(String orinFilename, CIObject compressedCiObject, CIObject thumbailCiObject) {
+        UploadPictureDto uploadPictureDto = new UploadPictureDto();
+        int width = compressedCiObject.getWidth();
+        int height = compressedCiObject.getHeight();
+        double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
+
+        uploadPictureDto.setPicWidth(width);
+        uploadPictureDto.setPicHeight(height);
+        uploadPictureDto.setPicName(FileUtil.mainName(orinFilename));
+        uploadPictureDto.setPicScale(picScale);
+        uploadPictureDto.setPicFormat(compressedCiObject.getFormat());
+        uploadPictureDto.setPicSize(compressedCiObject.getSize().longValue());
+        uploadPictureDto.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());
+        // 缩略图
+        uploadPictureDto.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbailCiObject.getKey());
+        return uploadPictureDto;
+    }
+
+    // 封装压缩图返回结果
+    private UploadPictureDto buildResult(String orinFilename, CIObject compressedCiObject) {
+        UploadPictureDto uploadPictureDto = new UploadPictureDto();
+        int width = compressedCiObject.getWidth();
+        int height = compressedCiObject.getHeight();
+        double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
+
+        uploadPictureDto.setPicWidth(width);
+        uploadPictureDto.setPicHeight(height);
+        uploadPictureDto.setPicName(FileUtil.mainName(orinFilename));
+        uploadPictureDto.setPicScale(picScale);
+        uploadPictureDto.setPicFormat(compressedCiObject.getFormat());
+        uploadPictureDto.setPicSize(compressedCiObject.getSize().longValue());
+        uploadPictureDto.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());
+        return uploadPictureDto;
     }
 
     // 清理临时文件

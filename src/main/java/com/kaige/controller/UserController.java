@@ -38,7 +38,9 @@ public class UserController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterDto userRegisterDto) {
+
         ThrowUtils.throwIf(userRegisterDto == null, ErrorCode.PARAMS_ERROR);
+
         String userAccount = userRegisterDto.getUserAccount();
         String userPassword = userRegisterDto.getUserPassword();
         String checkPassword = userRegisterDto.getCheckPassword();

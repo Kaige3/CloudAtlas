@@ -2,6 +2,11 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    session:
+      cookie:
+        max-age: 259200
+
+
 spring:
   profiles:
     active: local
@@ -10,6 +15,9 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
+  session:
+    store-type: redis
+    timeout: 259200
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
