@@ -231,7 +231,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             return pictureVOPage;
         }
 
-        // 把对象列表转换为 —> 疯转对象列表
+        // 把对象列表转换为 —> 封装对象列表
         List<PictureVO> pictureVOList = records.stream().map(picture -> getPictureVO(picture, request)).collect(Collectors.toList());
         // 从图片列表中 搜集用户信息用于查询
         Set<Long> userIdSet = records.stream().map(Picture::getUserId).collect(Collectors.toSet());
