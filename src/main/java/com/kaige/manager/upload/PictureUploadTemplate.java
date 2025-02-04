@@ -44,7 +44,6 @@ public abstract class PictureUploadTemplate {
         String uuid = RandomUtil.randomString(8);
         String orinFilename = getOrinFileName(inputSource);
 
-        // TODO 感觉有一个bug
         String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(orinFilename));
         String uploadPath = String.format("%s/%s", uploadPathPrefix, uploadFilename);
         File file = null;

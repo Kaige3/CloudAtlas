@@ -15,12 +15,10 @@ import com.kaige.constant.UserConstant;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
 import com.kaige.model.dto.PictureTagCategory;
-import com.kaige.model.dto.picture.PictureEditDto;
-import com.kaige.model.dto.picture.PictureQueryDto;
-import com.kaige.model.dto.picture.PictureUpdateDto;
-import com.kaige.model.dto.picture.PictureUploadDto;
+import com.kaige.model.dto.picture.*;
 import com.kaige.model.entity.Picture;
 import com.kaige.model.entity.User;
+import com.kaige.model.enums.PictureReviewStatusEnum;
 import com.kaige.model.vo.PictureVO;
 import com.kaige.service.PictureService;
 import com.kaige.service.UserService;
@@ -202,6 +200,14 @@ public class PictureController {
         return ResultUtils.success(pictureVO);
     }
 
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(@RequestBody PictureUploadDto uploadDto, HttpServletRequest request){
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = uploadDto.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, uploadDto, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
+
     /**
      * 删除图片
      * @param deleteRequest
@@ -294,7 +300,7 @@ public class PictureController {
     // 分页获取图片列表 （管理员）
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Picture>> listPictureVOByPage(@RequestBody PictureQueryDto queryDto){
+    public BaseResponse<Page<Picture>> listPictureByPage(@RequestBody PictureQueryDto queryDto){
         long current = queryDto.getCurrent();
         long pageSize = queryDto.getPageSize();
         // 查询数据库
@@ -318,6 +324,9 @@ public class PictureController {
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditDto editDto, HttpServletRequest request) {
         if (editDto == null || editDto.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (editDto.getTags() == null  || editDto.getCategory() == null || editDto.getIntroduction() == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"请填充信息");
         }
         // 将实体类 和 封装类进行 转换
         Picture picture = new Picture();
@@ -355,6 +364,29 @@ public class PictureController {
         pictureTagCategory.setTags(tagList);
         pictureTagCategory.setCategories(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    /**
+     * 审核图片
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewDto reviewDto, HttpServletRequest request){
+        ThrowUtils.throwIf(reviewDto == null,ErrorCode.PARAMS_ERROR);
+        // 获取登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 获取要审核的图片id
+        pictureService.doPictureReview(reviewDto,loginUser);
+        return ResultUtils.success(true);
+    }
+
+    // 批量抓取图片
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchDto pictureUploadByBatchDto, HttpServletRequest request){
+        User loginUser = userService.getLoginUser(request);
+        Integer count = pictureService.uploadPictureByBatch(pictureUploadByBatchDto,loginUser);
+        return ResultUtils.success(count);
     }
 
 }
