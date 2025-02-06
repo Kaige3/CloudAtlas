@@ -3,10 +3,12 @@ package com.kaige.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
+import com.kaige.model.dto.space.SpaceAddDto;
 import com.kaige.model.dto.space.SpaceQueryDto;
 import com.kaige.model.entity.Space;
 import com.kaige.model.entity.User;
@@ -18,12 +20,15 @@ import com.kaige.mapper.SpaceMapper;
 import com.kaige.service.UserService;
 import com.kaige.utils.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,6 +44,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     @Override
     public QueryWrapper<Space> getQueryWrapper(SpaceQueryDto spaceQueryDto) {
@@ -162,6 +170,51 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         if(!space.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)){
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+    }
+
+    /**
+     * 用户创建空间
+     * @param spaceAddDto
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public long addSpace(SpaceAddDto spaceAddDto, User loginUser) {
+        // 将dto转换为实体类
+        Space space = new Space();
+        BeanUtils.copyProperties(spaceAddDto,space);
+
+        // 提供默认值
+        if(StrUtil.isBlank(spaceAddDto.getSpaceName())){
+            space.setSpaceName("我的空间");
+        }
+        if (spaceAddDto.getSpaceLevel() == null){
+            space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+        }
+        // 填充数据
+        this.fillSpaceBySpaceLevel(space);
+        // 检验数据
+        this.validSpace(space,true);
+        Long userId = loginUser.getId();
+        space.setUserId(userId);
+        // 权限校验
+        if(SpaceLevelEnum.COMMON.getValue() != spaceAddDto.getSpaceLevel() &&!userService.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"不能创建指定级别的空间");
+        }
+        // 对用户加锁
+        String lock = String.valueOf(userId).intern();
+        synchronized (lock){
+            Long newSpaceId = transactionTemplate.execute(status -> {
+                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
+                ThrowUtils.throwIf(exists, ErrorCode.PARAMS_ERROR, "用户已创建空间");
+                // 操作数据库
+                boolean save = this.save(space);
+                ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR, "创建空间失败");
+                return space.getId();
+            });
+            return Optional.ofNullable(newSpaceId).orElse(-1L);
+        }
+
     }
 
 }

@@ -17,10 +17,12 @@ import com.kaige.exception.ErrorCode;
 import com.kaige.model.dto.PictureTagCategory;
 import com.kaige.model.dto.picture.*;
 import com.kaige.model.entity.Picture;
+import com.kaige.model.entity.Space;
 import com.kaige.model.entity.User;
 import com.kaige.model.enums.PictureReviewStatusEnum;
 import com.kaige.model.vo.PictureVO;
 import com.kaige.service.PictureService;
+import com.kaige.service.SpaceService;
 import com.kaige.service.UserService;
 import com.kaige.utils.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,9 @@ public class PictureController {
     private PictureService pictureService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private SpaceService spaceService;
 
 
     private final Cache<String,String> LOCAL_CACHE =
@@ -221,22 +226,15 @@ public class PictureController {
         }
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
-        // 获取要删除的图片id
         Long id = deleteRequest.getId();
-        Picture pictureOld = pictureService.getById(id);
-        ThrowUtils.throwIf(pictureOld == null,ErrorCode.NOT_FOUND_ERROR);
-
-        // 只有本人 和 管理员可以删除
-        if(!pictureOld.getUserId().equals(loginUser.getId()) &&!userService.isAdmin(loginUser)){
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
-
-        // 操作数据库 删除
-        boolean result = pictureService.removeById(id);
-        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
-        pictureService.clearPictureFile(pictureOld);
+        
+        // 获取要删除的图片id
+        pictureService.deletePicture(id, loginUser);
         return ResultUtils.success(true);
     }
+
+
+
 
     /**
      * 更新图片（只有管理员可以使用）
@@ -290,10 +288,15 @@ public class PictureController {
     public BaseResponse<PictureVO> getPictureVOById(Long id,HttpServletRequest request){
         ThrowUtils.throwIf(id == null,ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Picture byId = pictureService.getById(id);
-        ThrowUtils.throwIf(byId == null,ErrorCode.NOT_FOUND_ERROR);
+        Picture picture = pictureService.getById(id);
+        ThrowUtils.throwIf(picture == null,ErrorCode.NOT_FOUND_ERROR);
+        // 空间权限校验
+        if (picture.getSpaceId() != null){
+            User loginUser = userService.getLoginUser(request);
+            pictureService.checkPictureAuth(picture,loginUser);
+        }
         // 封装返回信息
-        PictureVO pictureVO = pictureService.getPictureVO(byId, request);
+        PictureVO pictureVO = pictureService.getPictureVO(picture, request);
         return ResultUtils.success(pictureVO);
     }
 
@@ -314,6 +317,21 @@ public class PictureController {
         long current = queryDto.getCurrent();
         long pageSize = queryDto.getPageSize();
         // 查询数据库
+        Long spaceId = queryDto.getSpaceId();
+        // 公开图库
+        if (spaceId == null){
+            queryDto.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            queryDto.setSpaceIdIsNull(true);
+        }else {
+        // 私有空间
+            User loginUser = userService.getLoginUser(request);
+            Space space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null,ErrorCode.NOT_FOUND_ERROR,"空间不存在");
+            if(!loginUser.getId().equals(space.getUserId())){
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有空间权限");
+            }
+
+        }
         Page<Picture> page = pictureService.page(new Page<>(current, pageSize), pictureService.getQueryWrapper(queryDto));
         Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(page, request);
         return ResultUtils.success(pictureVOPage);
@@ -328,32 +346,11 @@ public class PictureController {
         if (editDto.getTags() == null  || editDto.getCategory() == null || editDto.getIntroduction() == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"请填充信息");
         }
-        // 将实体类 和 封装类进行 转换
-        Picture picture = new Picture();
-        BeanUtil.copyProperties(editDto, picture);
-        // 接受的是 封装类，入库的是实体类
-        // 将list 转为 string
-        picture.setTags(JSONUtil.toJsonStr(editDto.getTags()));
-        // 设置编辑时间
-        picture.setEditTime(new Date());
-        // 数据校验
-        pictureService.validPicture(picture);
-        User loginUser = userService.getLoginUser(request);
-
-        // 判断是否存在
-        Long id = editDto.getId();
-        Picture byId = pictureService.getById(id);
-        ThrowUtils.throwIf(byId == null, ErrorCode.NOT_FOUND_ERROR);
-        // 操作数据库
-        // 只有本人 和 管理员可以编辑
-        if (!byId.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
-        // 操作数据库
-        boolean b = pictureService.updateById(picture);
-        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
+        pictureService.editPicture(editDto, request);
         return ResultUtils.success(true);
     }
+
+
 
     // 获取 标签和分类 先写死
     @GetMapping("/tag_category")

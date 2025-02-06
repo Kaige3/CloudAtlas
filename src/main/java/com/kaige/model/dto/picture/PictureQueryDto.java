@@ -50,4 +50,13 @@ public class PictureQueryDto implements Serializable {
 
     private long pageSize;
     private List<String> tags;
+
+    private Long spaceId;
+
+    /**
+     * 查询spaceId为null的图片
+     */
+    private boolean spaceIdIsNull;
+
+
 }

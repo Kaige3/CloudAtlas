@@ -15,6 +15,7 @@ public class PictureUpdateDto implements Serializable {
     private String introduction;
     private String category;
     private List<String> tags;
+    private Long spaceId;
 
 
 }

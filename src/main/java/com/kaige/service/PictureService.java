@@ -3,10 +3,7 @@ package com.kaige.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kaige.config.CosClientConfig;
-import com.kaige.model.dto.picture.PictureQueryDto;
-import com.kaige.model.dto.picture.PictureReviewDto;
-import com.kaige.model.dto.picture.PictureUploadByBatchDto;
-import com.kaige.model.dto.picture.PictureUploadDto;
+import com.kaige.model.dto.picture.*;
 import com.kaige.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.kaige.model.entity.User;
@@ -48,5 +45,13 @@ public interface PictureService extends IService<Picture> {
     Integer uploadPictureByBatch(PictureUploadByBatchDto pictureUploadByBatchDto
     ,User loginUser);
 
+
+    void deletePicture(long id, User loginUser);
+
+
+    void editPicture(PictureEditDto editDto, HttpServletRequest request);
+
     void clearPictureFile(Picture picture);
+
+    void checkPictureAuth(Picture pictureOld, User loginUser);
 }

@@ -17,6 +17,8 @@ import com.kaige.exception.ErrorCode;
 import com.kaige.model.dto.space.*;
 import com.kaige.model.entity.Space;
 import com.kaige.model.entity.User;
+import com.kaige.model.enums.SpaceLevelEnum;
+import com.kaige.model.vo.SpaceLevel;
 import com.kaige.model.vo.SpaceVO;
 import com.kaige.service.SpaceService;
 import com.kaige.service.UserService;
@@ -30,7 +32,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/space")
@@ -50,6 +55,17 @@ public class SpaceController {
 //                    .maximumSize(10000L)
 //                    .expireAfterWrite(5L, TimeUnit.MINUTES)
 //                    .build();
+
+    // 新增空间
+    @PostMapping("/add")
+    public BaseResponse<Long> addSpace(@RequestBody SpaceAddDto spaceAddDto,HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceAddDto == null, ErrorCode.PARAMS_ERROR);
+        // 获取登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用service
+        long newId = spaceService.addSpace(spaceAddDto, loginUser);
+        return ResultUtils.success(newId);
+    }
 
     /**
      * redis缓存
@@ -82,7 +98,7 @@ public class SpaceController {
         }
 
         // 从数据查询
-        Page<Space> page = spaceService.page(new Page<>(), spaceService.getQueryWrapper(spaceQueryDto));
+        Page<Space> page = spaceService.page(new Page<>(current,pageSize), spaceService.getQueryWrapper(spaceQueryDto));
         // 转换为VO
         Page<SpaceVO> spaceVOPage = spaceService.getSpaceVOPage(page, request);
         // 存入redis
@@ -151,10 +167,6 @@ public class SpaceController {
 
         Space byId = spaceService.getById(id);
         ThrowUtils.throwIf(byId == null,ErrorCode.NOT_FOUND_ERROR);
-
-        // 补充审核信息
-        User loginUser = userService.getLoginUser(request);
-        spaceService.fillSpaceBySpaceLevel(space);
 
         // 操作数据库
         boolean b = spaceService.updateById(space);
@@ -244,6 +256,19 @@ public class SpaceController {
         boolean b = spaceService.updateById(space);
         ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    //查询空间等级
+    @GetMapping("/lsit/level")
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel(){
+        List<SpaceLevel> collect = Arrays.stream(SpaceLevelEnum.values())
+                .map(spaceLevelEnum -> new SpaceLevel(
+                        spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()
+                )).collect(Collectors.toList());
+        return ResultUtils.success(collect);
     }
 
 }

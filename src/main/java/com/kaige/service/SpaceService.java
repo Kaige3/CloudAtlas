@@ -2,6 +2,7 @@ package com.kaige.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kaige.model.dto.space.SpaceAddDto;
 import com.kaige.model.dto.space.SpaceQueryDto;
 import com.kaige.model.entity.Space;
 import com.kaige.model.entity.Space;
@@ -46,5 +47,8 @@ public interface SpaceService extends IService<Space> {
      * @param space
      */
     void checkSpaceAuth(Space space,User loginUser);
+
+    // 用户拆创建空间
+    long addSpace(SpaceAddDto spaceAddDto,User loginUser);
 
 }

@@ -122,6 +122,8 @@ public class Picture implements Serializable {
      */
     private Date reviewTime;
 
+    private Long spaceId;
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {
