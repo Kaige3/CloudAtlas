@@ -58,5 +58,16 @@ public class PictureQueryDto implements Serializable {
      */
     private boolean spaceIdIsNull;
 
+    /**
+     * 开始编辑时间
+     */
+    private Date startEditTime;
+
+    /**
+     * 结束编辑时间
+     */
+    private Date endEditTime;
+
+
 
 }

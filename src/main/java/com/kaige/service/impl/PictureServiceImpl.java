@@ -81,6 +81,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         // 校验空间 和是否具有空间权限
         Long spaceId = pictureUploadDto.getSpaceId();
+        log.info(spaceId+"========================");
         if(spaceId!= null){
             // 校验空间是否存在
             Space space = spaceService.getById(spaceId);
@@ -154,6 +155,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setUserId(loginUser.getId());
         picture.setThumbnailUrl(upload.getThumbnailUrl());
         picture.setSpaceId(spaceId);
+        log.info(spaceId+"========================");
         // 审核信息
         this.fillReviewInfo(picture,loginUser);
         // 如果 pictureId 不为空,是更新图片
@@ -239,6 +241,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 .eq(ObjUtil.isNotEmpty(spaceId), "spaceId", spaceId)
                 .isNull(spaceIdIsNull,"spaceId")
         ;
+        Date startEditTime = pictureQueryDto.getStartEditTime();
+        Date endEditTime = pictureQueryDto.getEndEditTime();
+        queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
+        queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
+
         // JSON 数组查询
         if(CollUtil.isNotEmpty(tags)){
             for (String tag:tags){

@@ -199,7 +199,7 @@ public class PictureController {
     @PostMapping("/upload")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile file
-    , PictureUploadDto uploadDto, HttpServletRequest request){
+    ,@ModelAttribute  PictureUploadDto uploadDto, HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(file, uploadDto, loginUser);
         return ResultUtils.success(pictureVO);
