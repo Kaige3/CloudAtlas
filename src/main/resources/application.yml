@@ -5,8 +5,6 @@ server:
     session:
       cookie:
         max-age: 259200
-
-
 spring:
   profiles:
     active: local

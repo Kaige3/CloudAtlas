@@ -11,6 +11,8 @@ import com.kaige.Result.BaseResponse;
 import com.kaige.Result.DeleteRequest;
 import com.kaige.Result.ResultUtils;
 import com.kaige.annotation.AuthCheck;
+import com.kaige.api.SoImageSearchApiFacade;
+import com.kaige.api.model.SoImageSearchDto;
 import com.kaige.constant.UserConstant;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
@@ -51,7 +53,6 @@ public class PictureController {
     private PictureService pictureService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
-
     @Resource
     private SpaceService spaceService;
 
@@ -63,6 +64,14 @@ public class PictureController {
                     .build();
 
 
+    // 以图搜图
+    @PostMapping("/search/picture")
+    public BaseResponse<List<SoImageSearchDto>> searchPicture(@RequestBody SearchPictureByPictureDto pictureQueryDto){
+        Picture picture = pictureService.getById(pictureQueryDto.getId());
+        String url = picture.getUrl();
+        List<SoImageSearchDto> soImageSearchDtos = SoImageSearchApiFacade.searchImage(url, 0);
+        return ResultUtils.success(soImageSearchDtos);
+    }
     // 多级缓存
     @PostMapping("/list/page/vo/Caffeinecache3")
     public BaseResponse<Page<PictureVO>> listPictureVoByPageWithCaffeineCacheAndRedis(
@@ -234,8 +243,6 @@ public class PictureController {
     }
 
 
-
-
     /**
      * 更新图片（只有管理员可以使用）
      */
@@ -385,5 +392,7 @@ public class PictureController {
         Integer count = pictureService.uploadPictureByBatch(pictureUploadByBatchDto,loginUser);
         return ResultUtils.success(count);
     }
+
+
 
 }

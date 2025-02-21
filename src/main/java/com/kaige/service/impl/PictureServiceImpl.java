@@ -243,6 +243,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ;
         Date startEditTime = pictureQueryDto.getStartEditTime();
         Date endEditTime = pictureQueryDto.getEndEditTime();
+        // 补充时间范围
         queryWrapper.ge(ObjUtil.isNotEmpty(startEditTime), "editTime", startEditTime);
         queryWrapper.lt(ObjUtil.isNotEmpty(endEditTime), "editTime", endEditTime);
 
@@ -445,18 +446,24 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         this.checkPictureAuth(pictureOld, loginUser);
 
         // 操作数据库 删除
-        transactionTemplate.execute(status -> {
-            boolean result = this.removeById(id);
-            ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
+        if (pictureOld.getSpaceId() != null){
+            transactionTemplate.execute(status -> {
+                boolean result = this.removeById(id);
+                ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
 
-            boolean update = spaceService.lambdaUpdate()
-                    .eq(Space::getId, pictureOld.getSpaceId())
-                    .setSql("totalSize = totalSize - " + pictureOld.getPicSize())
-                    .setSql("totalCount = totalCount -1")
-                    .update();
-            ThrowUtils.throwIf(!update,ErrorCode.OPERATION_ERROR,"额更新失败");
-            return true;
-        });
+                boolean update = spaceService.lambdaUpdate()
+                        .eq(Space::getId, pictureOld.getId())
+                        .setSql("totalSize = totalSize - " + pictureOld.getPicSize())
+                        .setSql("totalCount = totalCount -1")
+                        .update();
+                ThrowUtils.throwIf(!update,ErrorCode.OPERATION_ERROR,"额更新失败");
+                return true;
+            });
+        } else {
+            boolean result = this.removeById(id);
+            ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,"删除图片失败");
+        }
+
         this.clearPictureFile(pictureOld);
     }
 

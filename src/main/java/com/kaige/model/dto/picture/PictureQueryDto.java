@@ -14,6 +14,7 @@ public class PictureQueryDto implements Serializable {
     private String name;
     private String introduction;
     private String category;
+
     private Long picSize;
     private Integer picWidth;
     private Integer picHeight;
