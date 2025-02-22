@@ -54,6 +54,7 @@ public class FileManager {
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
             // 返回文件路径
             UploadPictureDto uploadPictureDto = new UploadPictureDto();
+
             int width = imageInfo.getWidth();
             int height = imageInfo.getHeight();
             double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();

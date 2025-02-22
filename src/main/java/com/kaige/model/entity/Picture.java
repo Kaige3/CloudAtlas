@@ -124,6 +124,8 @@ public class Picture implements Serializable {
 
     private Long spaceId;
 
+    private String picColor;
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {

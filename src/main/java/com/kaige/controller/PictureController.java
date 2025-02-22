@@ -393,6 +393,19 @@ public class PictureController {
         return ResultUtils.success(count);
     }
 
+    // 按照图片颜色搜索
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorDto searchPictureByColorDto,HttpServletRequest request){
+        ThrowUtils.throwIf(searchPictureByColorDto == null,ErrorCode.PARAMS_ERROR,"缺少参数");
+        Long spaceId = searchPictureByColorDto.getSpaceId();
+        String picColor = searchPictureByColorDto.getPicColor();
+        ThrowUtils.throwIf(picColor == null || spaceId == null,ErrorCode.PARAMS_ERROR,"颜色格式错误");
+        User loginUser = userService.getLoginUser(request);
+        List<PictureVO> pictureVOS = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
+        return ResultUtils.success(pictureVOS);
+    }
+
+
 
 
 }

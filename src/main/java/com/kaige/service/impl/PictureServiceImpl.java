@@ -25,6 +25,7 @@ import com.kaige.model.vo.UserVo;
 import com.kaige.service.PictureService;
 import com.kaige.mapper.PictureMapper;
 import com.kaige.service.UserService;
+import com.kaige.utils.ColorSimilarUtils;
 import com.kaige.utils.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -33,15 +34,15 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.io.IOException;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -81,7 +82,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
         // 校验空间 和是否具有空间权限
         Long spaceId = pictureUploadDto.getSpaceId();
-        log.info(spaceId+"========================");
         if(spaceId!= null){
             // 校验空间是否存在
             Space space = spaceService.getById(spaceId);
@@ -146,6 +146,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         if(StrUtil.isNotBlank(pictureUploadDto.getPicName())){
             picName = pictureUploadDto.getPicName();
         }
+        picture.setSpaceId(spaceId);
         picture.setName(picName);
         picture.setPicSize(upload.getPicSize());
         picture.setPicWidth(upload.getPicWidth());
@@ -154,8 +155,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicFormat(upload.getPicFormat());
         picture.setUserId(loginUser.getId());
         picture.setThumbnailUrl(upload.getThumbnailUrl());
-        picture.setSpaceId(spaceId);
-        log.info(spaceId+"========================");
+        picture.setPicColor(upload.getPicColor());
         // 审核信息
         this.fillReviewInfo(picture,loginUser);
         // 如果 pictureId 不为空,是更新图片
@@ -168,13 +168,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setEditTime(new Date());
         }
         // 开启事务
-        Long finalPictureId = spaceId;
+        Long finalSpaceId = spaceId;
+        log.info("finalSpaceId:{}",finalSpaceId);
+        System.out.println("finalSpaceId:{}====================="+finalSpaceId);
         transactionTemplate.execute(status -> {
             boolean result = this.saveOrUpdate(picture);
             ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR,"图片上传失败");
-            if (finalPictureId != null){
+            if (finalSpaceId != null){
                 boolean update = spaceService.lambdaUpdate()
-                        .eq(Space::getId, finalPictureId)
+                        .eq(Space::getId, finalSpaceId)
                         .setSql("totalSize = totalSize + " + picture.getPicSize())
                         .setSql("totalCount = totalCount +1")
                         .update();
@@ -182,7 +184,6 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
             return picture;
         });
-
 
         // 返回封装类图片信息
         return PictureVO.objToVo(picture);
@@ -452,11 +453,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
 
                 boolean update = spaceService.lambdaUpdate()
-                        .eq(Space::getId, pictureOld.getId())
+                        .eq(Space::getId, pictureOld.getSpaceId())
                         .setSql("totalSize = totalSize - " + pictureOld.getPicSize())
                         .setSql("totalCount = totalCount -1")
                         .update();
-                ThrowUtils.throwIf(!update,ErrorCode.OPERATION_ERROR,"额更新失败");
+                ThrowUtils.throwIf(!update,ErrorCode.OPERATION_ERROR,"额度更新失败");
                 return true;
             });
         } else {
@@ -529,6 +530,48 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
         }
+    }
+
+    @Override
+    public List<PictureVO> searchPictureByColor(Long spaceId, String color, User loginUser) {
+        // 判断参数
+        ThrowUtils.throwIf(spaceId == null || StrUtil.isBlank(color),ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(loginUser == null,ErrorCode.NOT_LOGIN_ERROR);
+        // 判断权限
+        // 当前用户是否是空间管理员
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null,ErrorCode.PARAMS_ERROR,"空间不存在");
+        if(!space.getUserId().equals(loginUser.getId())){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有访问空间的权限");
+        }
+        // 查询数据库
+        List<Picture> pictureList = this.lambdaQuery()
+               .eq(Picture::getSpaceId, spaceId)
+                .isNotNull(Picture::getPicColor)
+               .list();
+        // 如果没有图片，返回空
+        if(CollUtil.isEmpty(pictureList)){
+            return null;
+        }
+        // 调用utils
+        // 将color的哈希值 转换为Color对象
+        Color targetColor = Color.decode(color);
+        // 计算相似度并排序
+        List<Picture> collect = pictureList.stream()
+                .sorted(Comparator.comparingDouble(picture -> {
+                    // 提取图片主色调
+                    String picColor = picture.getPicColor();
+                    // 将picColor的哈希值 转换为Color对象
+                    Color picColorObj = Color.decode(picColor);
+                    // 计算相似度
+                    return -ColorSimilarUtils.calculateSimilarity(targetColor, picColorObj);
+                }))
+                .limit(12)
+                .collect(Collectors.toList());
+        // 转为VO
+        return collect.stream()
+                .map(PictureVO::objToVo)
+                .collect(Collectors.toList());
     }
 
 }

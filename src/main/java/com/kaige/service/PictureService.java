@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author 15336
@@ -54,4 +55,6 @@ public interface PictureService extends IService<Picture> {
     void clearPictureFile(Picture picture);
 
     void checkPictureAuth(Picture pictureOld, User loginUser);
+
+    List<PictureVO> searchPictureByColor(Long spaceId,String color,User loginUser);
 }

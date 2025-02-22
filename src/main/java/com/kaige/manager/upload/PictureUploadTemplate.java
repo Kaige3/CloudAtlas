@@ -55,8 +55,7 @@ public abstract class PictureUploadTemplate {
             // 4.上传图片到对象存储
             PutObjectResult putObjectResult = cosManager.putObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
-
-
+            log.info("===================="+imageInfo.getAve());
             ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
             List<CIObject> objectList = processResults.getObjectList();
             if(CollUtil.isNotEmpty(objectList)){
@@ -69,7 +68,7 @@ public abstract class PictureUploadTemplate {
                      thumbailCiObject = objectList.get(1);
                 }
                 // 封装压缩图返回结果
-                return buildResult(orinFilename,compressedCiObject,thumbailCiObject);
+                return buildResult(orinFilename,compressedCiObject,thumbailCiObject,imageInfo);
 
             }
             // 5.封装返回结果
@@ -83,13 +82,15 @@ public abstract class PictureUploadTemplate {
         }
     }
 
-    private UploadPictureDto buildResult(String orinFilename, CIObject compressedCiObject, CIObject thumbailCiObject) {
+    // 封装缩略图返回结果
+    private UploadPictureDto buildResult(String orinFilename, CIObject compressedCiObject, CIObject thumbailCiObject, ImageInfo imageInfo) {
         UploadPictureDto uploadPictureDto = new UploadPictureDto();
         int width = compressedCiObject.getWidth();
         int height = compressedCiObject.getHeight();
         double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
 
         uploadPictureDto.setPicWidth(width);
+        uploadPictureDto.setPicColor(imageInfo.getAve());
         uploadPictureDto.setPicHeight(height);
         uploadPictureDto.setPicName(FileUtil.mainName(orinFilename));
         uploadPictureDto.setPicScale(picScale);
@@ -101,7 +102,7 @@ public abstract class PictureUploadTemplate {
         return uploadPictureDto;
     }
 
-    // 封装压缩图返回结果
+    // 封装压缩图返回结果-已启用，thumbail更小
     private UploadPictureDto buildResult(String orinFilename, CIObject compressedCiObject) {
         UploadPictureDto uploadPictureDto = new UploadPictureDto();
         int width = compressedCiObject.getWidth();
@@ -134,13 +135,15 @@ public abstract class PictureUploadTemplate {
         int width = imageInfo.getWidth();
         int height = imageInfo.getHeight();
         double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
-
         uploadPictureDto.setPicWidth(width);
         uploadPictureDto.setPicHeight(height);
         uploadPictureDto.setPicName(FileUtil.mainName(orinFilename));
         uploadPictureDto.setPicScale(picScale);
         uploadPictureDto.setPicFormat(imageInfo.getFormat());
         uploadPictureDto.setPicSize(FileUtil.size(file));
+
+        uploadPictureDto.setPicColor(imageInfo.getAve());
+
         uploadPictureDto.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
         return uploadPictureDto;
     }

@@ -27,6 +27,8 @@ public class PictureUploadDto implements Serializable {
      */
     private Long spaceId;
 
+
+
     private static final long serialVersionUID = 1L;
 
 }
