@@ -405,6 +405,16 @@ public class PictureController {
         return ResultUtils.success(pictureVOS);
     }
 
+    // 批量修改图片信息
+    @PostMapping("/edit/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchEditePicture(@RequestBody BatchEditePictureDto batchEditePictureDto,HttpServletRequest request){
+        ThrowUtils.throwIf(batchEditePictureDto == null,ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null,ErrorCode.NOT_LOGIN_ERROR);
+        pictureService.batchEditePicture(batchEditePictureDto,loginUser);
+        return ResultUtils.success(true);
+    }
 
 
 

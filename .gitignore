@@ -32,6 +32,8 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+test/
+.gitignore
 
 ### VS Code ###
 .vscode/

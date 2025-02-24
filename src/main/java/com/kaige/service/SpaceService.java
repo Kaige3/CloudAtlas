@@ -2,6 +2,7 @@ package com.kaige.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kaige.model.dto.picture.BatchEditePictureDto;
 import com.kaige.model.dto.space.SpaceAddDto;
 import com.kaige.model.dto.space.SpaceQueryDto;
 import com.kaige.model.entity.Space;
@@ -50,5 +51,7 @@ public interface SpaceService extends IService<Space> {
 
     // 用户拆创建空间
     long addSpace(SpaceAddDto spaceAddDto,User loginUser);
+
+    //批量修改个人空间图片的分类和标签
 
 }

@@ -574,6 +574,73 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchEditePicture(BatchEditePictureDto batchEditePictureDto, User loginUser) {
+        // 检验参数
+        List<Long> pictureIdList = batchEditePictureDto.getPictureIdList();
+        Long spaceId = batchEditePictureDto.getSpaceId();
+        String category = batchEditePictureDto.getCategory();
+        List<String> tags = batchEditePictureDto.getTags();
+        ThrowUtils.throwIf(CollUtil.isEmpty(pictureIdList),ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(spaceId == null,ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(category),ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(CollUtil.isEmpty(tags),ErrorCode.PARAMS_ERROR);
+        // 校验空间是否存在
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null,ErrorCode.PARAMS_ERROR,"空间不存在");
+        // 校验空间权限
+        spaceService.checkSpaceAuth(space,loginUser);
+        // 按IdList查询图片列表,仅选择需要的字段
+        List<Picture> pictureList = this.lambdaQuery()
+                .select(Picture::getId, Picture::getSpaceId)
+                .eq(Picture::getSpaceId, spaceId)
+                .in(Picture::getId, pictureIdList)
+                .list();
+        if (pictureList == null){
+            return;
+        }
+        // 批量设置分类和标签
+        pictureList.forEach(picture -> {
+            if (StrUtil.isNotBlank(category)){
+                picture.setCategory(category);
+            }
+            if (CollUtil.isNotEmpty(tags)){
+                picture.setTags(JSONUtil.toJsonStr(tags));
+            }
+        });
+
+        // 批量重命名
+        String nameRule = batchEditePictureDto.getNameRule();
+        fillPictureWithNameRule(pictureList,nameRule);
+
+        // 持久化
+        boolean result = this.updateBatchById(pictureList);
+        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
+    }
+
+    /**
+     * 规则：名称 {序号}
+     * @param pictureList
+     * @param nameRule
+     */
+    private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
+        if (CollUtil.isEmpty(pictureList) || StrUtil.isBlank(nameRule)){
+            return;
+        }
+        long count = 1;
+        try {
+            for (Picture picture : pictureList) {
+                picture.setName(nameRule.replaceAll("\\{序号}", String.valueOf(count)));
+                count++;
+            }
+        } catch (Exception e) {
+            log.error("批量重命名失败",e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"批量重命名失败");
+        }
+    }
+
+
 }
 
 
