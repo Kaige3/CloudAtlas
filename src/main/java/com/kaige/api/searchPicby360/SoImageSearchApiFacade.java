@@ -1,8 +1,8 @@
-package com.kaige.api;
+package com.kaige.api.searchPicby360;
 
-import com.kaige.api.model.SoImageSearchDto;
-import com.kaige.api.sub.GetSoImageListApi;
-import com.kaige.api.sub.GetSoImageUrlApi;
+import com.kaige.api.searchPicby360.model.SoImageSearchDto;
+import com.kaige.api.searchPicby360.sub.GetSoImageListApi;
+import com.kaige.api.searchPicby360.sub.GetSoImageUrlApi;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;

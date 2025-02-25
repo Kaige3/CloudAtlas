@@ -1,4 +1,4 @@
-package com.kaige.api.sub;
+package com.kaige.api.searchPicby360.sub;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
@@ -6,7 +6,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.kaige.api.model.SoImageSearchDto;
+import com.kaige.api.searchPicby360.model.SoImageSearchDto;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;

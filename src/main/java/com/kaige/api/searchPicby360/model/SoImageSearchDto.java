@@ -1,4 +1,4 @@
-package com.kaige.api.model;
+package com.kaige.api.searchPicby360.model;
 
 import lombok.Data;
 

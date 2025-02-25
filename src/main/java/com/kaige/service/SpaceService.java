@@ -52,6 +52,4 @@ public interface SpaceService extends IService<Space> {
     // 用户拆创建空间
     long addSpace(SpaceAddDto spaceAddDto,User loginUser);
 
-    //批量修改个人空间图片的分类和标签
-
 }

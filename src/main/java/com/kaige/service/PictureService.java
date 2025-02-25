@@ -2,6 +2,8 @@ package com.kaige.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.kaige.config.CosClientConfig;
 import com.kaige.model.dto.picture.*;
 import com.kaige.model.entity.Picture;
@@ -60,4 +62,6 @@ public interface PictureService extends IService<Picture> {
 
     void batchEditePicture(BatchEditePictureDto batchEditePictureDto,User loginUser);
 
+    // ai阔图
+    CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,User loginUser);
 }

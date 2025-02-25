@@ -4,10 +4,14 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kaige.api.aliyunai.AliYunApi;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
 import com.kaige.manager.CosManager;
@@ -65,6 +69,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private SpaceServiceImpl spaceService;
+
+    @Resource
+    private AliYunApi aliYunApi;
 
     @Resource
     private CosManager cosManager;
@@ -618,6 +625,24 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         boolean result = this.updateBatchById(pictureList);
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
     }
+
+    @Override
+    public CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+        // 获取图片信息
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        Picture picture = this.getById(pictureId);
+        ThrowUtils.throwIf(picture == null,ErrorCode.NOT_FOUND_ERROR);
+        // 校验权限
+        this.checkPictureAuth(picture,loginUser);
+        // 构造请求参数
+        CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        taskRequest.setInput(input);
+        BeanUtil.copyProperties(createPictureOutPaintingTaskRequest,taskRequest);
+        return aliYunApi.createOutPaintingTask(taskRequest);
+    }
+
 
     /**
      * 规则：名称 {序号}

@@ -11,8 +11,11 @@ import com.kaige.Result.BaseResponse;
 import com.kaige.Result.DeleteRequest;
 import com.kaige.Result.ResultUtils;
 import com.kaige.annotation.AuthCheck;
-import com.kaige.api.SoImageSearchApiFacade;
-import com.kaige.api.model.SoImageSearchDto;
+import com.kaige.api.aliyunai.AliYunApi;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.kaige.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.kaige.api.searchPicby360.SoImageSearchApiFacade;
+import com.kaige.api.searchPicby360.model.SoImageSearchDto;
 import com.kaige.constant.UserConstant;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
@@ -38,7 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,10 +53,13 @@ public class PictureController {
     private UserService userService;
     @Resource
     private PictureService pictureService;
-    @Autowired
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private SpaceService spaceService;
+
+    @Resource
+    private AliYunApi aliYunApi;
 
 
     private final Cache<String,String> LOCAL_CACHE =
@@ -414,6 +419,27 @@ public class PictureController {
         ThrowUtils.throwIf(loginUser == null,ErrorCode.NOT_LOGIN_ERROR);
         pictureService.batchEditePicture(batchEditePictureDto,loginUser);
         return ResultUtils.success(true);
+    }
+
+    // ai阔图
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createOutPaintingTask(@RequestBody CreatePictureOutPaintingTaskRequest createOutPaintingTaskRequest, HttpServletRequest request){
+        if (createOutPaintingTaskRequest == null || createOutPaintingTaskRequest.getPictureId() == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        CreateOutPaintingTaskResponse response = pictureService.createOutPaintingTask(createOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(response);
+    }
+
+    // 查询阔图任务
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> GetOutPaintingTask(@RequestParam("taskId") String taskId, HttpServletRequest request){
+        if (taskId == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        GetOutPaintingTaskResponse outPaintingTask = aliYunApi.createOutPaintingTask(taskId);
+        return ResultUtils.success(outPaintingTask);
     }
 
 
