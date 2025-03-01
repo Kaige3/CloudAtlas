@@ -24,7 +24,7 @@ public interface SpaceService extends IService<Space> {
     QueryWrapper<Space> getQueryWrapper(SpaceQueryDto spaceQueryDto);
 
     // 获取 单张空间封装类
-    SpaceVO getSpaceVO(Space space, HttpServletRequest request);
+    SpaceVO getSpaceVO(Space space);
 
     // 获取 多张空间封装类
     Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage, HttpServletRequest request);

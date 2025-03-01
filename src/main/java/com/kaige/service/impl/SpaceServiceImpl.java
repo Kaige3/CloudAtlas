@@ -75,7 +75,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     }
 
     @Override
-    public SpaceVO getSpaceVO(Space space, HttpServletRequest request) {
+    public SpaceVO getSpaceVO(Space space) {
         SpaceVO spaceVO = SpaceVO.objToVo(space);
         Long userId = space.getUserId();
         if(userId !=null && userId > 0){
