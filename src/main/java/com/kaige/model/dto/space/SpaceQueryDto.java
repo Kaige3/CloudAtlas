@@ -1,6 +1,6 @@
 package com.kaige.model.dto.space;
 
-import com.kaige.Result.PageRequest;
+import com.kaige.result.PageRequest;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,4 +13,5 @@ public class SpaceQueryDto extends PageRequest implements Serializable {
     private Long userId;
     private String spaceName;
     private Integer spaceLevel;
+    private Integer spaceType;
 }

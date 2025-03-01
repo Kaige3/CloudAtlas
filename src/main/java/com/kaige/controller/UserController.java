@@ -2,8 +2,8 @@ package com.kaige.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kaige.Result.BaseResponse;
-import com.kaige.Result.ResultUtils;
+import com.kaige.result.BaseResponse;
+import com.kaige.result.ResultUtils;
 import com.kaige.annotation.AuthCheck;
 import com.kaige.constant.UserConstant;
 import com.kaige.exception.BusinessException;
@@ -35,7 +35,7 @@ public class UserController {
      * @param userRegisterDto
      * @return
      */
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterDto userRegisterDto) {
 

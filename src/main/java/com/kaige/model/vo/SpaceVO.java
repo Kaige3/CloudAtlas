@@ -24,6 +24,7 @@ public class SpaceVO implements Serializable {
     private Date editTime;
     private Date updateTime;
     private UserVo user;
+    private Integer spaceType;
 
 
     // 封装类转 对象

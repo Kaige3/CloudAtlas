@@ -1,6 +1,7 @@
 package com.kaige.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
@@ -15,6 +16,7 @@ import com.kaige.model.entity.Picture;
 import com.kaige.model.entity.Space;
 import com.kaige.model.entity.User;
 import com.kaige.model.enums.SpaceLevelEnum;
+import com.kaige.model.enums.SpaceTypeEnum;
 import com.kaige.model.vo.SpaceVO;
 import com.kaige.model.vo.UserVo;
 import com.kaige.service.SpaceService;
@@ -60,10 +62,13 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         Long userId = spaceQueryDto.getUserId();
         String spaceName = spaceQueryDto.getSpaceName();
         Integer spaceLevel = spaceQueryDto.getSpaceLevel();
+        Integer spaceType = spaceQueryDto.getSpaceType();
 
         queryWrapper.eq(id != null,"id",id)
                 .eq(userId!= null,"userId",userId)
                 .like(StrUtil.isNotBlank(spaceName),"spaceName",spaceName)
+                // **Space 扩展 查询团队空间
+                .eq(ObjUtil.isNotEmpty(spaceType),"spaceType",spaceType)
                .eq(spaceLevel!= null,"spaceLevel",spaceLevel);
 
         return queryWrapper;
@@ -125,7 +130,11 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         ThrowUtils.throwIf(space == null, ErrorCode.PARAMS_ERROR);
         String spaceName = space.getSpaceName();
         Integer spaceLevel = space.getSpaceLevel();
+        // **Space**扩展
+        Integer spaceType = space.getSpaceType();
+
         SpaceLevelEnum enumByValue = SpaceLevelEnum.getEnumByValue(spaceLevel);
+        SpaceTypeEnum spaceTypeEnum = SpaceTypeEnum.getEnumByValue(spaceType);
 
         // 创建
         if (add) {
@@ -135,6 +144,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
           if (enumByValue == null){
               throw new BusinessException(ErrorCode.PARAMS_ERROR,"空间等级不能");
           }
+          if (spaceTypeEnum == null){
+              throw new BusinessException(ErrorCode.PARAMS_ERROR,"空间类型不存在");
+          }
         }
         // 修改数据时
         if(spaceLevel != null && enumByValue == null){
@@ -142,6 +154,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         }
         if(StrUtil.isNotBlank(spaceName) && spaceName.length() > 20){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"空间名称过长");
+        }
+        if(spaceTypeEnum == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"空间类型不存在");
         }
 
     }
@@ -185,14 +200,20 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 将dto转换为实体类
         Space space = new Space();
         BeanUtils.copyProperties(spaceAddDto,space);
-
         // 提供默认值
         if(StrUtil.isBlank(spaceAddDto.getSpaceName())){
             space.setSpaceName("我的空间");
         }
+        // 默认创建 普通空间
         if (spaceAddDto.getSpaceLevel() == null){
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
         }
+        // **Space** 扩展
+        // 默认创建 私有空间
+        if (spaceAddDto.getSpaceType() == null){
+            space.setSpaceType(SpaceTypeEnum.PRIVATE.getValue());
+        }
+
         // 填充数据
         this.fillSpaceBySpaceLevel(space);
         // 检验数据
@@ -207,8 +228,12 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         String lock = String.valueOf(userId).intern();
         synchronized (lock){
             Long newSpaceId = transactionTemplate.execute(status -> {
-                boolean exists = this.lambdaQuery().eq(Space::getUserId, userId).exists();
-                ThrowUtils.throwIf(exists, ErrorCode.PARAMS_ERROR, "用户已创建空间");
+                boolean exists = this.lambdaQuery()
+                        .eq(Space::getUserId, userId)
+//                        ** Space扩展
+                        .eq(Space::getSpaceType,space.getSpaceType())
+                        .exists(); // 每类空间只能创建一个
+                ThrowUtils.throwIf(exists, ErrorCode.PARAMS_ERROR, "空间已存在");
                 // 操作数据库
                 boolean save = this.save(space);
                 ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR, "创建空间失败");

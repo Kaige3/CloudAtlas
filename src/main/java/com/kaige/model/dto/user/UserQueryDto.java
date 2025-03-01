@@ -1,6 +1,6 @@
 package com.kaige.model.dto.user;
 
-import com.kaige.Result.PageRequest;
+import com.kaige.result.PageRequest;
 import lombok.Data;
 
 import java.io.Serializable;

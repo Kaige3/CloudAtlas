@@ -49,7 +49,7 @@ public interface SpaceService extends IService<Space> {
      */
     void checkSpaceAuth(Space space,User loginUser);
 
-    // 用户拆创建空间
+    // 用户创建空间
     long addSpace(SpaceAddDto spaceAddDto,User loginUser);
 
 }

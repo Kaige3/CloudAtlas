@@ -1,7 +1,7 @@
 package com.kaige.controller;
 
-import com.kaige.Result.BaseResponse;
-import com.kaige.Result.ResultUtils;
+import com.kaige.result.BaseResponse;
+import com.kaige.result.ResultUtils;
 import com.kaige.manager.CosManager;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;

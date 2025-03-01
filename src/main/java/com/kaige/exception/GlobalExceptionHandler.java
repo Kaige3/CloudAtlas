@@ -1,7 +1,7 @@
 package com.kaige.exception;
 
-import com.kaige.Result.BaseResponse;
-import com.kaige.Result.ResultUtils;
+import com.kaige.result.BaseResponse;
+import com.kaige.result.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

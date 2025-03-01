@@ -1,4 +1,4 @@
-package com.kaige.Result;
+package com.kaige.result;
 
 import lombok.Data;
 
