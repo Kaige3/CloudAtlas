@@ -10,6 +10,7 @@ import org.springframework.beans.BeanUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class PictureVO implements Serializable {
     private UserVo user;
     private Long spaceId;
     private String picColor;
+    private List<String> permissionList = new ArrayList<>();
 
 
     /**

@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 @Getter
 public enum SpaceRoleEnum {
 
-    VIEWER("浏览者","1"),
-    EDITOR("编辑者","2"),
-    ADMIN("管理员","3");
+    VIEWER("浏览者","viewer"),
+    EDITOR("编辑者","editor"),
+    ADMIN("管理员","admin");
 
     private final String text;
 

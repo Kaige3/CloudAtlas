@@ -2,6 +2,8 @@ package com.kaige.controller;
 
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
+import com.kaige.manager.auth.annotation.SaSpaceCheckPermission;
+import com.kaige.manager.auth.constant.SpaceUserPermissionsConstant;
 import com.kaige.model.dto.spaceUser.SpaceUserAddDto;
 import com.kaige.model.dto.spaceUser.SpaceUserEditDto;
 import com.kaige.model.dto.spaceUser.SpaceUserQueryDto;
@@ -37,6 +39,7 @@ public class SpaceUserController {
      * 添加成员到空间
      */
     @PostMapping("/add")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.SPACE_ADMIN_MANAGE)
     public BaseResponse<Long> addSpaceUser(@RequestBody SpaceUserAddDto spaceUserAddDto, HttpServletRequest request){
         ThrowUtils.throwIf(spaceUserAddDto == null, ErrorCode.PARAMS_ERROR,"参数为空");
         long result = spaceUserService.addSpaceUser(spaceUserAddDto);
@@ -47,6 +50,7 @@ public class SpaceUserController {
      * 删除成员
      */
     @PostMapping("/delete")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.SPACE_ADMIN_MANAGE)
     public BaseResponse<Boolean> deleteSpaceUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request){
         if(deleteRequest == null || deleteRequest.getId() <= 0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -64,6 +68,7 @@ public class SpaceUserController {
      * 查询某个成员的信息
      */
     @GetMapping("/get")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.SPACE_ADMIN_MANAGE)
     public BaseResponse<SpaceUser> getSpaceUserById(@RequestBody SpaceUserQueryDto spaceUserQueryDto){
         if(spaceUserQueryDto == null || spaceUserQueryDto.getId() <= 0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -81,6 +86,7 @@ public class SpaceUserController {
      * 查询成员列表
      */
     @PostMapping("/list")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.SPACE_ADMIN_MANAGE)
     public BaseResponse<List<SpaceUserVo>> listSpaceUserByPage(@RequestBody SpaceUserQueryDto spaceUserQueryDto, HttpServletRequest request){
         ThrowUtils.throwIf(spaceUserQueryDto == null,ErrorCode.PARAMS_ERROR);
         List<SpaceUser> spaceUserList = spaceUserService.list(spaceUserService.getQueryWrapper(spaceUserQueryDto));
@@ -91,6 +97,7 @@ public class SpaceUserController {
      * 编辑成员信息
      */
     @PostMapping("/edit")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.SPACE_ADMIN_MANAGE)
     public BaseResponse<Boolean> editSpaceUser(@RequestBody SpaceUserEditDto spaceUserEditDto, HttpServletRequest request){
 
         // 参数校验

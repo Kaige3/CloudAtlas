@@ -55,7 +55,7 @@ public abstract class PictureUploadTemplate {
             // 4.上传图片到对象存储
             PutObjectResult putObjectResult = cosManager.putObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
-            log.info("===================="+imageInfo.getAve());
+//            log.info("===================="+imageInfo.getAve());
             ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
             List<CIObject> objectList = processResults.getObjectList();
             if(CollUtil.isNotEmpty(objectList)){

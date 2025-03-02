@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kaige.manager.auth.SpaceUserAuthManager;
 import com.kaige.result.BaseResponse;
 import com.kaige.result.DeleteRequest;
 import com.kaige.result.ResultUtils;
@@ -46,6 +47,8 @@ public class SpaceController {
     private SpaceService spaceService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
 
 //    private final Cache<String,String> LOCAL_CACHE =
@@ -192,10 +195,13 @@ public class SpaceController {
     public BaseResponse<SpaceVO> getSpaceVOById(Long id,HttpServletRequest request){
         ThrowUtils.throwIf(id <= 0,ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Space byId = spaceService.getById(id);
-        ThrowUtils.throwIf(byId == null,ErrorCode.NOT_FOUND_ERROR);
+        Space space = spaceService.getById(id);
+        ThrowUtils.throwIf(space == null,ErrorCode.NOT_FOUND_ERROR);
         // 封装返回信息
-        SpaceVO spaceVO = spaceService.getSpaceVO(byId, request);
+        SpaceVO spaceVO = spaceService.getSpaceVO(space);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         return ResultUtils.success(spaceVO);
     }
 

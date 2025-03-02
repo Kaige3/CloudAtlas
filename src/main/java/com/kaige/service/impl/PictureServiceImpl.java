@@ -94,9 +94,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null,ErrorCode.PARAMS_ERROR,"空间不存在");
             // 校验用户是否具有空间权限,必须是空间管理员
-            if(!loginUser.getId().equals(space.getUserId())){
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"您没有空间权限");
-            }
+//            if(!loginUser.getId().equals(space.getUserId())){
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"您没有空间权限");
+//            }
             // 校验额度
             if (space.getTotalCount() >= space.getMaxCount()) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "空间额度不足");
@@ -176,8 +176,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         // 开启事务
         Long finalSpaceId = spaceId;
-        log.info("finalSpaceId:{}",finalSpaceId);
-        System.out.println("finalSpaceId:{}====================="+finalSpaceId);
+//        log.info("finalSpaceId:{}",finalSpaceId);
+//        System.out.println("finalSpaceId:{}====================="+finalSpaceId);
         transactionTemplate.execute(status -> {
             boolean result = this.saveOrUpdate(picture);
             ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR,"图片上传失败");
@@ -451,7 +451,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(pictureOld == null,ErrorCode.NOT_FOUND_ERROR);
 
         // 只有本人 和 空间管理员可以删除
-        this.checkPictureAuth(pictureOld, loginUser);
+//        this.checkPictureAuth(pictureOld, loginUser);
 
         // 操作数据库 删除
         if (pictureOld.getSpaceId() != null){
@@ -496,7 +496,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 操作数据库
         // 只有本人 和 管理员可以编辑
-        this.checkPictureAuth(byId, loginUser);
+//        this.checkPictureAuth(byId, loginUser);
 //        this.fillReviewInfo(picture, loginUser);
         // 操作数据库
         boolean b = this.updateById(picture);
@@ -548,9 +548,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 当前用户是否是空间管理员
         Space space = spaceService.getById(spaceId);
         ThrowUtils.throwIf(space == null,ErrorCode.PARAMS_ERROR,"空间不存在");
-        if(!space.getUserId().equals(loginUser.getId())){
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有访问空间的权限");
-        }
+//        if(!space.getUserId().equals(loginUser.getId())){
+//            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有访问空间的权限");
+//        }
         // 查询数据库
         List<Picture> pictureList = this.lambdaQuery()
                .eq(Picture::getSpaceId, spaceId)
@@ -597,7 +597,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Space space = spaceService.getById(spaceId);
         ThrowUtils.throwIf(space == null,ErrorCode.PARAMS_ERROR,"空间不存在");
         // 校验空间权限
-        spaceService.checkSpaceAuth(space,loginUser);
+//        spaceService.checkSpaceAuth(space,loginUser);
         // 按IdList查询图片列表,仅选择需要的字段
         List<Picture> pictureList = this.lambdaQuery()
                 .select(Picture::getId, Picture::getSpaceId)
@@ -633,7 +633,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture picture = this.getById(pictureId);
         ThrowUtils.throwIf(picture == null,ErrorCode.NOT_FOUND_ERROR);
         // 校验权限
-        this.checkPictureAuth(picture,loginUser);
+//        this.checkPictureAuth(picture,loginUser);
         // 构造请求参数
         CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();

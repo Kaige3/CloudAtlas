@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kaige.exception.BusinessException;
 import com.kaige.exception.ErrorCode;
+import com.kaige.manager.auth.StpKit;
 import com.kaige.model.dto.user.UserQueryDto;
 import com.kaige.model.entity.User;
 import com.kaige.model.enums.UserRoleEnum;
@@ -97,6 +98,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        // **SA-TOKEN 扩展
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE,user);
         // 4. 返回脱敏信息
         return this.getLoginUserVo(user);
 

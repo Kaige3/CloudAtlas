@@ -7,6 +7,11 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.kaige.manager.auth.SpaceUserAuthContext;
+import com.kaige.manager.auth.SpaceUserAuthManager;
+import com.kaige.manager.auth.StpKit;
+import com.kaige.manager.auth.annotation.SaSpaceCheckPermission;
+import com.kaige.manager.auth.constant.SpaceUserPermissionsConstant;
 import com.kaige.result.BaseResponse;
 import com.kaige.result.DeleteRequest;
 import com.kaige.result.ResultUtils;
@@ -43,7 +48,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @RestController
-@RequestMapping
+@RequestMapping("/picture")
 @Slf4j
 public class PictureController {
 
@@ -58,6 +63,9 @@ public class PictureController {
 
     @Resource
     private AliYunApi aliYunApi;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
 
     private final Cache<String,String> LOCAL_CACHE =
@@ -209,7 +217,7 @@ public class PictureController {
      * @return
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_UPLOAD)
     public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile file
     ,@ModelAttribute  PictureUploadDto uploadDto, HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
@@ -218,6 +226,7 @@ public class PictureController {
     }
 
     @PostMapping("/upload/url")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_UPLOAD)
     public BaseResponse<PictureVO> uploadPictureByUrl(@RequestBody PictureUploadDto uploadDto, HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
         String fileUrl = uploadDto.getFileUrl();
@@ -232,6 +241,7 @@ public class PictureController {
      * @return
      */
     @PostMapping("/delete")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_DELETE)
     public BaseResponse<Boolean> deletePicture(@RequestBody DeleteRequest deleteRequest,HttpServletRequest request){
         if(deleteRequest == null || deleteRequest.getId() <= 0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -301,12 +311,25 @@ public class PictureController {
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null,ErrorCode.NOT_FOUND_ERROR);
         // 空间权限校验
-        if (picture.getSpaceId() != null){
-            User loginUser = userService.getLoginUser(request);
-            pictureService.checkPictureAuth(picture,loginUser);
+//        if (picture.getSpaceId() != null){
+//            User loginUser = userService.getLoginUser(request);
+//            pictureService.checkPictureAuth(picture,loginUser);
+//        }
+        Space space = null;
+        Long spaceId = picture.getSpaceId();
+        if (spaceId != null){
+
+            boolean permission = StpKit.SPACE.hasPermission(SpaceUserPermissionsConstant.PICTURE_VIEW);
+            ThrowUtils.throwIf(!permission,ErrorCode.NO_AUTH_ERROR);
+            space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null,ErrorCode.NOT_FOUND_ERROR,"空间不存在");
         }
+        //获取权限列表
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
         // 封装返回信息
         PictureVO pictureVO = pictureService.getPictureVO(picture, request);
+        pictureVO.setPermissionList(permissionList);
         return ResultUtils.success(pictureVO);
     }
 
@@ -334,12 +357,14 @@ public class PictureController {
             queryDto.setSpaceIdIsNull(true);
         }else {
         // 私有空间
-            User loginUser = userService.getLoginUser(request);
-            Space space = spaceService.getById(spaceId);
-            ThrowUtils.throwIf(space == null,ErrorCode.NOT_FOUND_ERROR,"空间不存在");
-            if(!loginUser.getId().equals(space.getUserId())){
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有空间权限");
-            }
+//            User loginUser = userService.getLoginUser(request);
+//            Space space = spaceService.getById(spaceId);
+//            ThrowUtils.throwIf(space == null,ErrorCode.NOT_FOUND_ERROR,"空间不存在");
+//            if(!loginUser.getId().equals(space.getUserId())){
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有空间权限");
+//            }
+            boolean permission = StpKit.SPACE.hasPermission(SpaceUserPermissionsConstant.PICTURE_VIEW);
+            ThrowUtils.throwIf(!permission,ErrorCode.NO_AUTH_ERROR);
 
         }
         Page<Picture> page = pictureService.page(new Page<>(current, pageSize), pictureService.getQueryWrapper(queryDto));
@@ -347,8 +372,9 @@ public class PictureController {
         return ResultUtils.success(pictureVOPage);
     }
 
-    // 编辑图片
+    // 编辑图片-用户使用
     @PostMapping("/edit")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_EDIT)
     public BaseResponse<Boolean> editPicture(@RequestBody PictureEditDto editDto, HttpServletRequest request) {
         if (editDto == null || editDto.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -398,6 +424,7 @@ public class PictureController {
 
     // 按照图片颜色搜索
     @PostMapping("/search/color")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_VIEW)
     public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorDto searchPictureByColorDto,HttpServletRequest request){
         ThrowUtils.throwIf(searchPictureByColorDto == null,ErrorCode.PARAMS_ERROR,"缺少参数");
         Long spaceId = searchPictureByColorDto.getSpaceId();
@@ -410,7 +437,7 @@ public class PictureController {
 
     // 批量修改图片信息
     @PostMapping("/edit/batch")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_EDIT)
     public BaseResponse<Boolean> batchEditePicture(@RequestBody BatchEditePictureDto batchEditePictureDto,HttpServletRequest request){
         ThrowUtils.throwIf(batchEditePictureDto == null,ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
@@ -421,6 +448,7 @@ public class PictureController {
 
     // ai阔图
     @PostMapping("/out_painting/create_task")
+    @SaSpaceCheckPermission(value = SpaceUserPermissionsConstant.PICTURE_EDIT)
     public BaseResponse<CreateOutPaintingTaskResponse> createOutPaintingTask(@RequestBody CreatePictureOutPaintingTaskRequest createOutPaintingTaskRequest, HttpServletRequest request){
         if (createOutPaintingTaskRequest == null || createOutPaintingTaskRequest.getPictureId() == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
