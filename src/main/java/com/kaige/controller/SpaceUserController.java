@@ -18,6 +18,7 @@ import com.kaige.service.UserService;
 import com.kaige.utils.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -30,6 +31,7 @@ import java.util.List;
 public class SpaceUserController {
 
     @Resource
+    @Lazy
     private SpaceUserService spaceUserService;
 
     @Resource

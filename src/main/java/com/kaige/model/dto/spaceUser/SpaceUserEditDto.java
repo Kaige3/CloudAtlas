@@ -11,5 +11,5 @@ public class SpaceUserEditDto implements Serializable {
     private Long  id;
     // 冗余字段
     private Long spaceId;
-    private Integer spaceRole;
+    private String spaceRole;
 }

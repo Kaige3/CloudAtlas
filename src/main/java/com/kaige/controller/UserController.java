@@ -2,6 +2,8 @@ package com.kaige.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kaige.manager.auth.annotation.SaSpaceCheckPermission;
+import com.kaige.manager.auth.constant.SpaceUserPermissionsConstant;
 import com.kaige.result.BaseResponse;
 import com.kaige.result.ResultUtils;
 import com.kaige.annotation.AuthCheck;
@@ -28,7 +30,6 @@ public class UserController {
 
     @Resource
     private UserService userService;
-
     /**
      * 用户注册
      *
@@ -47,6 +48,7 @@ public class UserController {
         long result = userService.userRegister(userAccount, userPassword, checkPassword);
         return ResultUtils.success(result);
     }
+
 
     /**
      * 获取当前登录用户

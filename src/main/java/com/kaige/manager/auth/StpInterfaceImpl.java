@@ -200,6 +200,7 @@ public class StpInterfaceImpl implements StpInterface {
         // 兼容get / post
         if(ContentType.JSON.getValue().equals(contentType)) { // post请求
             String body = ServletUtil.getBody(request);
+            log.info("body:{}",body);
             authContext = JSONUtil.toBean(body, SpaceUserAuthContext.class);
         } else {
             Map<String, String> paramMap = ServletUtil.getParamMap(request);
